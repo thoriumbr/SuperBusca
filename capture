@@ -1,0 +1,52 @@
+#!/bin/bash
+FOLDER=/capture
+source $FOLDER/options
+LOCK=/tmp/capture.lock
+TIMESTAMP=`date "+%Y%m%d%H%M%S"`
+DATE=`date "+%H:%M"`
+FILENAME=$FOLDER/images/${TIMESTAMP}
+SAVEIMAGE=$FOLDER/save/${TIMESTAMP}.png
+echo -ne "$DATE\tCapture"
+DIFF=9999
+
+if [ "$INDEX" == "false" ] ; then
+	echo "Capture suspended. Exiting."
+	exit 1
+fi
+
+if ! mkdir $LOCK  2> /dev/null ; then
+	echo "Previous instance still running"
+	exit 1
+fi
+
+CURRENTWINDOW=`xdotool getactivewindow getwindowname`
+
+if echo "$CURRENTWINDOW" | grep -qi $IGNORE ; then
+	echo -e "\tIgnoring window."
+	rmdir $LOCK 2> /dev/null
+	exit
+fi
+
+if [ -f $FOLDER/images/current.png ] ; then
+	mv $FOLDER/images/current.png $FOLDER/images/previous.png
+	nice -n 19 ionice -c3 import -window root $FOLDER/images/current.png 
+	DIFF=`compare -metric MAE $FOLDER/images/previous.png $FOLDER/images/current.png null: 2>&1 | cut -d'.' -f1 | cut -d' ' -f1`
+else
+	nice -n 19 ionice -c3 import -window root $FOLDER/images/current.png 
+	DIFF=9999
+fi
+
+if [ $DIFF -gt 5000 ] ; then
+	echo -ne "\tConvert"
+	nice -n 19 ionice -c3 convert ${FOLDER}/images/current.png -modulate 100,0 -resize 400% ${FILENAME}_large.png 
+	nice -n 19 ionice -c3 convert ${FOLDER}/images/current.png -strip -interlace Plane -sampling-factor 4:2:0 -quality 75% -resize 800x600 ${FILENAME}.jpg 
+	echo -ne "\t OCR"
+	nice -n 19 ionice -c3 tesseract ${FILENAME}_large.png $FOLDER/text/$TIMESTAMP 2>/dev/null
+	cp $FOLDER/text/${TIMESTAMP}.txt $FOLDER/spool/
+	rm ${FILENAME}_large.png
+	echo -e "\tOK"
+else
+	mv $FOLDER/images/previous.png $FOLDER/images/current.png
+	echo -e "\tImages too similar. Skipping"
+fi
+rmdir $LOCK 2> /dev/null

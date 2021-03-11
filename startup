@@ -1,0 +1,7 @@
+#!/bin/bash
+id
+/usr/share/elasticsearch/bin/elasticsearch > /tmp/elastic.log 2>&1 &
+/capture/scheduler &
+sleep 5 
+cd /capture ; php -S 0.0.0.0:18000 &
+tail -F /tmp/capture.log

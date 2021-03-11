@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# create data folders if they don't exist, ignore error if they exist
+# images captured
+mkdir -p $HOME/superbusca/capture/images 2>/dev/null
+
+# text from OCR
+mkdir -p $HOME/superbusca/capture/text 2>/dev/null
+
+# cache for thumbnail generation
+mkdir -p $HOME/superbusca/capture/cache 2>/dev/null
+
+# temporary location of text files
+mkdir -p $HOME/superbusca/capture/spool 2>/dev/null
+
+# special images that are saved at full resolution
+mkdir -p $HOME/superbusca/capture/save 2>/dev/null
+
+# ElasticSearch data 
+mkdir -p $HOME/superbusca/elasticsearch/data 2>/dev/null
+#touch $HOME/superbusca/capture/capture.log 2>/dev/null
+
+sudo docker run \
+	--name capture \
+	--privileged \
+	--env DISPLAY=unix$DISPLAY \
+	--user=$(id -u $USER):$(id -g $USER) \
+	--publish 18000:18000 \
+	--volume $HOME/superbusca/capture/images:/capture/images:rw  \
+	--volume $HOME/superbusca/capture/text:/capture/text:rw  \
+	--volume $HOME/superbusca/capture/spool:/capture/spool:rw  \
+	--volume $HOME/superbusca/capture/save:/capture/save:rw  \
+	--volume $HOME/superbusca/capture/save:/capture/cache:rw  \
+	--volume $HOME/superbusca/elasticsearch/data:/var/lib/elasticsearch:rw  \
+	--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+	--rm \
+	-it capture /bin/bash
