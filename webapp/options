@@ -1,0 +1,4 @@
+SLEEP=60
+MAXFILES=30
+INDEX=true
+IGNORE="9gag\\|youtube\\|reddit"

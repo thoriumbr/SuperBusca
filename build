@@ -1,0 +1,5 @@
+#!/bin/bash
+cd webapp
+tar cvf ../files.tar *
+cd ..
+sudo docker build -t capture .

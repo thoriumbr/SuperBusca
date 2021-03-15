@@ -1,0 +1,14 @@
+#!/bin/bash
+source /capture/options
+SPOOLSIZE=`ls -1 /capture/spool | wc -l`
+
+if [ "X$!" != "X" ] ; then
+	MAXFILES=0
+fi
+if [ $SPOOLSIZE -gt $MAXFILES ] ; then
+	echo "Spool size ($SPOOLSIZE) greater than $MAXFILES. Indexing folder."
+	for FILE in /capture/spool/*txt ; do
+		nice -n 19 ionice -c3 php /capture/post.php $FILE
+		rm $FILE
+	done
+fi

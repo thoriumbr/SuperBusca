@@ -1,0 +1,11 @@
+#!/bin/bash
+while true; do
+	source /capture/options
+	/capture/indexer >> /tmp/indexer.log 2>&1 &
+	START=`date +%s`
+	/usr/bin/capture >> /tmp/capture.log 2>&1
+	FINISH=`date +%s`
+	SL=$(( SLEEP - ( FINISH - START) ))
+	echo -ne "\tSleep ${SL}s"
+	sleep $SL
+done
